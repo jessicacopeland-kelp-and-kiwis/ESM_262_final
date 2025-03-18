@@ -1,0 +1,198 @@
+---
+title: "ESM 262 assignment 3- SJKF"
+author: "Jessica Copeland"
+date: "2025-03-17"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+I am recycling my SJKF function with a few improvements, since I am working solo. 
+
+```{r}
+# Here is the function I created, which is also saved as a separate R file. 
+
+#' San Joaquin Kit Fox weights and home ranges (an almost correct function)
+#'
+#' @param W is weight of the fox in pounds. 
+#' @param G is gender of the fox. The only options are: 1 for female, 2 for male
+#' @param HR_minimum is the minimum home range size of the fox in meters, in this case always 1000. #
+#' @returns HR_indiv  The home range for the individual in meters. 
+
+
+SJKF_range=function(W,G,HR_minimum=1000,HR_indiv) {
+
+  if(W<0) W=NA # Weight should not be less than zero
+  
+  # Using ifelse() to set NA for values that are not 1 or 2, because we can only have 1 and 2 to specify the genders of the animals. 
+  G <-ifelse(G != 1 & G != 2, NA, G)
+
+  #    return("Home range cannot be less than 0")
+  if (HR_minimum < 0) return("Home range cannot be less than 0")
+
+  # Calculate the home range of the individual SJKF 
+   result <- (W * G) + HR_minimum
+
+return(result)
+}
+
+```
+
+ I have this function saved as  # SJKF_func.R #
+ 
+```{r}
+# I will bring in the function now
+
+source("C:/Users/jcope/OneDrive/Desktop/UCSB/R/SJKF_func.R")
+```
+ Let's generate some data using a for loop! 
+ 
+```{r}
+# Lets say I want to generate 10 different weights.. 
+num_weights <- 10
+
+# I want to create a vector (empty) to store the weights. 
+weights <- numeric(num_weights)
+
+# Then I can use a "for loop" to generate random weights
+set.seed(123)  # Ensures reproducibility
+for (i in 1:num_weights) {
+  weights[i] <- runif(1, min = 3, max = 15)  # Generate a random weight
+}
+
+# Print the generated weights
+print(weights)
+```
+ Cool that gave me 10 different weights. 
+ Now I want to try some more looping with purrr, but I want it to give me whole integers instead. 
+```{r}
+library(purrr)
+
+set.seed(123)
+
+# Generate 10 random integer weights between 3 and 15
+weights <- map_int(1:10, ~ sample(3:15, 1))
+
+print(weights)
+```
+ 
+ 
+ So now that I have weights, I will try and plug each one into the function...
+```{r}
+#First I want to use these numbers and assume they are all females..
+SJKF_range(G=1, W=5)
+SJKF_range(G=1, W=5)
+SJKF_range(G=1, W=12)
+SJKF_range(G=1, W=4)
+SJKF_range(G=1, W=8)
+SJKF_range(G=1, W=13)
+SJKF_range(G=1, W=7)
+SJKF_range(G=1, W=6)
+SJKF_range(G=1, W=8)
+SJKF_range(G=1, W=11)
+
+```
+ Now if I do the same thing assuming they are all males.... 
+ 
+```{r}
+SJKF_range(G=2, W=5)
+SJKF_range(G=2, W=5)
+SJKF_range(G=2, W=12)
+SJKF_range(G=2, W=4)
+SJKF_range(G=2, W=8)
+SJKF_range(G=2, W=13)
+SJKF_range(G=2, W=7)
+SJKF_range(G=2, W=6)
+SJKF_range(G=2, W=8)
+SJKF_range(G=2, W=11)
+```
+ 
+Now that I have inputs and outputs, I can attempt to plot these... 
+
+```{r}
+# Females first
+
+# Load ggplot2
+library(ggplot2)
+
+# Data from females
+data_f <- data.frame(
+  Weight = c(5, 5, 12, 4, 8, 13, 7, 6, 8, 11),  # Weights
+  HomeRange = c(1005, 1005, 1012, 1004, 1008, 1013, 1007, 1006, 1008, 1011),  # Corresponding home ranges
+  Gender= "Female"
+)
+
+# Create a scatter plot
+ggplot(data_f, aes(x = Weight, y = HomeRange)) +
+  geom_point(color = "pink", size = 3) +  # Add points
+  labs(
+    title = "San Joaquin Kit Fox Weights vs Home Ranges",
+    x = "Weight (pounds)",
+    y = "Home Range (meters)"
+  ) +
+  theme_minimal()  # Use a clean theme
+```
+Well, this ends up being super boring because of how I set up my function, oops! 
+
+I will try the males anyway... 
+
+ 
+```{r}
+# Now males... 
+
+data_m <- data.frame(
+  Weight = c(5, 5, 12, 4, 8, 13, 7, 6, 8, 11),  # Weights
+  HomeRange = c(1010, 1010, 1024, 1008, 1016, 1026, 1014, 1012, 1016, 1022), # Corresponding home ranges
+  Gender="Male"
+)
+
+# Create a scatter plot
+ggplot(data_f, aes(x = Weight, y = HomeRange)) +
+  geom_point(color = "blue", size = 3) +  # Add points
+  labs(
+    title = "San Joaquin Kit Fox Weights vs Home Ranges",
+    x = "Weight (pounds)",
+    y = "Home Range (meters)"
+  ) +
+  theme_minimal()  # Use a clean theme
+```
+I realized I want to combine my two datasets...
+
+```{r}
+# Combine the two datasets..now I can plot beter (hopefully)
+data_combined <- rbind(data_m, data_f)
+```
+
+ 
+Now plot!! 
+
+```{r}
+ggplot(data_combined, aes(x = Weight, y = HomeRange, color = Gender)) +
+  geom_point(size = 3) +  # Add points, color-coded by gender
+  labs(
+    title = "San Joaquin Kit Fox Weights vs Home Ranges by Gender",
+    x = "Weight (pounds)",
+    y = "Home Range (meters)"
+  ) +
+  theme_minimal()
+```
+
+ Now I want to try running some tests of my function with the test file...
+ 
+```{r}
+
+library(testthat)
+
+testthat::test_file("C:/Users/jcope/OneDrive/Desktop/UCSB/R/sjkf_test.R")
+
+#remember where you saved that test file!
+```
+ I got 0 fail, 0 warn, 0 skip, and 8 pass... which means that a total of 8 tests were conducted, and they all passed. 
+ 
+ So my function should be working just fine! 
+ 
